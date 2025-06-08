@@ -17,6 +17,25 @@ The project is organised into several packages under `cab_allocator`:
 
 Tests for each component live in the `tests` directory.
 
+## Functional Requirements
+
+- **Geospatial** – Ride requests contain pickup and drop-off coordinates. Drivers
+  send GPS pings and distances are computed through a pluggable provider
+  (`HaversineProvider` by default). `Settings` expose an adaptive `max_eta_km`
+  radius that varies by time of day.
+- **Categories** – Vehicles operate in the categories Mini, Sedan, EV, SUV, Auto
+  and Bike. Requests may upgrade along the hierarchy `Mini → Sedan → EV → SUV`
+  but never downgrade. Auto and Bike requests only match the same category.
+- **Driver States** – Drivers transition between `AVAILABLE`, `BUSY`, `OFFLINE`
+  and `TIMED_OUT` (no GPS ping for 15 minutes).
+- **Surge Pricing** – Each `RideRequest` includes a `surge_multiplier` which the
+  `FareCalculator` applies when computing the final fare.
+- **EV Range** – Electric vehicles specify remaining range and are skipped if a
+  ride would exceed it.
+- **Allocation** – The strategy interface supports single, batch and multicast
+  allocation. The simulator currently implements the simple `SingleStrategy` but
+  can be extended for Auto or Bike multicast scenarios.
+
 ## Application Flow
 
 1. **Driver Registration** – `/driver` endpoint adds a `Driver` instance to the in-memory list `DRIVERS`.
