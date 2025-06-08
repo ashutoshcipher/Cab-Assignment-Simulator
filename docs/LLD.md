@@ -57,6 +57,15 @@ Defines the FastAPI app. It instantiates the distance provider, fare calculator 
 ### allocation/strategy.py
 Contains the abstract base class `AllocationStrategy` and the default `SingleStrategy`. The algorithm computes ride distance, filters candidate drivers, and chooses the nearest one whose ETA is below the threshold provided by `Settings`.
 
+#### `SingleStrategy.allocate` decision flow
+1. Compute the distance of the requested ride.
+2. Iterate over drivers and skip any where `Driver.is_active` returns `False` for the request time.
+3. Exclude AUTO or BIKE drivers when the `VehicleCategory` does not match the request.
+4. If the driver is an EV, ensure the remaining range can cover the ride distance.
+5. Compute each driver's ETA to the pickup location and drop any that exceed the dynamic limit from `Settings.max_eta_km_for`.
+6. Sort remaining candidates by ETA and choose the closest.
+7. Use `FareCalculator` to determine the final price based on distance and surge.
+
 ### geo/distance.py
 Provides a `DistanceProvider` protocol and a `HaversineProvider` implementation. The provider computes the great-circle distance between two coordinates in kilometres.
 
