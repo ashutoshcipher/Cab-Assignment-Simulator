@@ -121,6 +121,32 @@ short lived and produced for each incoming API call. A single request results in
 a `RideEstimate` once the allocation strategy chooses a driver and pricing is
 applied.
 
+## Driver State Machine
+
+Drivers cycle through a few simple states while using the service. They start in
+`AVAILABLE`, become `BUSY` once a ride is assigned and return to `AVAILABLE`
+when the trip ends. If a driver stops sending GPS pings for more than
+15 minutes, they are marked as `TIMED_OUT` until another ping arrives. Drivers
+may also go `OFFLINE` manually when not working.
+
+| From | Event | To |
+| --- | --- | --- |
+| `AVAILABLE` | ride allocated | `BUSY` |
+| `BUSY` | ride ends | `AVAILABLE` |
+| `AVAILABLE` | no ping for 15 min | `TIMED_OUT` |
+| `TIMED_OUT` | ping received | `AVAILABLE` |
+| any | driver logs out | `OFFLINE` |
+
+```mermaid
+stateDiagram-v2
+    AVAILABLE --> BUSY: ride allocated
+    BUSY --> AVAILABLE: ride ends
+    AVAILABLE --> TIMED_OUT: no ping 15m
+    TIMED_OUT --> AVAILABLE: ping
+    AVAILABLE --> OFFLINE: log out
+    BUSY --> OFFLINE: log out
+```
+
 ## Sequence Diagrams
 
 ### Driver Registration
