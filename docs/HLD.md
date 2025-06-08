@@ -8,8 +8,29 @@ in-memory prototype.
 The goal is to dispatch nearby available drivers quickly while enabling future
 expansion. A full system should ingest driver locations and ride events through
 message brokers, store data in durable datastores and expose an HTTP API for
-clients. Non-goals include real-time surge pricing algorithms or mobile app
-features.
+ clients. Non-goals include real-time surge pricing algorithms or mobile app
+ features.
+
+## Functional Requirements Coverage
+The design addresses the core functional requirements of the allocation problem:
+
+- **Geospatial data** – driver GPS pings and pickup/drop-off coordinates are
+  handled as `(lat, lng)` tuples. The `HaversineProvider` computes distances and
+  `Settings.max_eta_km_for` enforces an adaptive search radius depending on the
+  time of day.
+- **Vehicle categories** – the simulator models `Mini`, `Sedan`, `EV`, `SUV`,
+  `Auto` and `Bike` via the `VehicleCategory` enum. Mini can upgrade to Sedan,
+  Sedan to EV, and EV to SUV. Auto and Bike do not upgrade.
+- **Driver states** – drivers transition between `AVAILABLE`, `BUSY`, `OFFLINE`
+  and `TIMED_OUT`. The `Driver.is_active` helper rejects drivers whose last GPS
+  ping is older than 15 minutes.
+- **Surge pricing** – each request carries a `surge_multiplier` applied by
+  `FareCalculator` to the base fare settings.
+- **EV range** – electric vehicles store their remaining range and are filtered
+  out if the ride distance exceeds this value.
+- **Allocation strategies** – the base `SingleStrategy` selects the closest
+  suitable driver. The design allows batch or multicast strategies to be plugged
+  in for further optimisation.
 
 ## System Components
 ### API Server
