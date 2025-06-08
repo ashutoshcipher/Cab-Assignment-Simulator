@@ -82,27 +82,39 @@ API returns an estimate for the trip. Their relationships are shown below.
 ```mermaid
 classDiagram
     class Driver {
-        +uuid id
-        +float lat
-        +float lon
+        +str id
+        +Location location
+        +VehicleCategory category
         +DriverState state
+        +float ev_range_km
+        +float last_ping
     }
 
     class RideRequest {
-        +Location origin
-        +Location destination
+        +str id
+        +Location pickup
+        +Location dropoff
         +VehicleCategory category
+        +float surge_multiplier
+        +float timestamp
     }
 
     class RideEstimate {
+        +RideRequest request
         +float distance_km
-        +float eta_minutes
+        +float eta_min
         +float fare
     }
 
     Driver "0..*" --> "1" RideRequest : serves
     RideRequest "1" --> "1" RideEstimate : yields
 ```
+
+| Dataclass | Fields |
+| --- | --- |
+| `Driver` | `id`, `location`, `category`, `state`, `ev_range_km`, `last_ping` |
+| `RideRequest` | `id`, `pickup`, `dropoff`, `category`, `surge_multiplier`, `timestamp` |
+| `RideEstimate` | `request`, `distance_km`, `eta_min`, `fare` |
 
 `Driver` instances are stored in-memory for testing. `RideRequest` objects are
 short lived and produced for each incoming API call. A single request results in
