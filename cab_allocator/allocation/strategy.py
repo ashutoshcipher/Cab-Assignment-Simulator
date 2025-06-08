@@ -8,6 +8,9 @@ from ..models import Driver, RideRequest, RideEstimate, VehicleCategory
 from ..geo import DistanceProvider
 from ..pricing import FareCalculator
 
+# Average minutes required to travel one kilometre (~30 km/h).
+ETA_PER_KM_MIN = 2.0
+
 class AllocationStrategy(ABC):
     """Base class for ride allocation strategies."""
 
@@ -67,4 +70,5 @@ class SingleStrategy(AllocationStrategy):
         candidates.sort(key=lambda x: x[0])
         eta, chosen = candidates[0]
         fare = self.fare.calculate_fare(ride_distance, request.surge_multiplier)
-        return RideEstimate(request=request, distance_km=ride_distance, eta_min=eta*2, fare=fare)
+        eta_min = eta * ETA_PER_KM_MIN
+        return RideEstimate(request=request, distance_km=ride_distance, eta_min=eta_min, fare=fare)
