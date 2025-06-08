@@ -64,7 +64,6 @@ class SingleStrategy(AllocationStrategy):
             candidates.append((eta, d))
         if not candidates:
             return None
-        candidates.sort(key=lambda x: x[0])
-        eta, chosen = candidates[0]
+        eta, chosen = min(candidates, key=lambda x: x[0])
         fare = self.fare.calculate_fare(ride_distance, request.surge_multiplier)
         return RideEstimate(request=request, distance_km=ride_distance, eta_min=eta*2, fare=fare)
