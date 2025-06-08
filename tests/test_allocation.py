@@ -51,3 +51,15 @@ def test_dynamic_eta_radius():
     night_request = RideRequest(id='rn', pickup=(0, 0), dropoff=(0, 0.1), category=VehicleCategory.MINI, timestamp=time.mktime(time.strptime('23:00', '%H:%M')))
     assert strategy.allocate(day_request, drivers) is None
     assert strategy.allocate(night_request, drivers) is not None
+
+
+def test_upgrade_path():
+    strategy = SingleStrategy(HaversineProvider(), FareCalculator(PricingSettings()))
+
+    sedan_driver = Driver(id='sd', location=(0, 0), category=VehicleCategory.SEDAN, state=DriverState.AVAILABLE)
+    mini_request = RideRequest(id='rm', pickup=(0, 0), dropoff=(0, 0.1), category=VehicleCategory.MINI)
+    assert strategy.allocate(mini_request, [sedan_driver]) is not None
+
+    mini_driver = Driver(id='md', location=(0, 0), category=VehicleCategory.MINI, state=DriverState.AVAILABLE)
+    sedan_request = RideRequest(id='rs', pickup=(0, 0), dropoff=(0, 0.1), category=VehicleCategory.SEDAN)
+    assert strategy.allocate(sedan_request, [mini_driver]) is None
