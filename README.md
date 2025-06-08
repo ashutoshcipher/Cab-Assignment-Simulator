@@ -18,6 +18,31 @@ Run the API:
 uvicorn cab_allocator.api.main:app --reload
 ```
 
+### Example API usage
+After starting the server you can interact with it using `curl`.
+
+Register a driver:
+```bash
+curl -X POST http://localhost:8000/driver \
+  -H "Content-Type: application/json" \
+  -d '{"id":"d1","location":[0,0],"category":"mini","state":"available"}'
+```
+Expected output:
+```json
+{"status":"ok"}
+```
+
+Request a ride:
+```bash
+curl -X POST http://localhost:8000/request \
+  -H "Content-Type: application/json" \
+  -d '{"id":"r1","pickup":[0,0],"dropoff":[0,0.1],"category":"mini","surge_multiplier":1.0,"timestamp":123}'
+```
+Sample response:
+```json
+{"request":{"id":"r1","pickup":[0.0,0.0],"dropoff":[0.0,0.1],"category":"mini","surge_multiplier":1.0,"timestamp":123.0},"distance_km":11.119492664455874,"eta_min":0.0,"fare":183.4339119734705}
+```
+
 ## Development
 Use `make dev` to install dependencies.
 Run tests with:
