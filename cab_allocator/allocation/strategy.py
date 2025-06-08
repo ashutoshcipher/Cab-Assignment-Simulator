@@ -8,6 +8,17 @@ from ..models import Driver, RideRequest, RideEstimate, VehicleCategory
 from ..geo import DistanceProvider
 from ..pricing import FareCalculator
 
+
+def _category_satisfies(driver_cat: VehicleCategory, request_cat: VehicleCategory) -> bool:
+    """Return ``True`` if ``driver_cat`` can serve ``request_cat`` or a higher category."""
+
+    cat = request_cat
+    while cat is not None:
+        if cat == driver_cat:
+            return True
+        cat = cat.upgrade_path()
+    return False
+
 # Average minutes required to travel one kilometre (~30 km/h).
 ETA_PER_KM_MIN = 2.0
 
@@ -58,6 +69,8 @@ class SingleStrategy(AllocationStrategy):
             if not d.is_active(request.timestamp):
                 continue
             if d.category in [VehicleCategory.AUTO, VehicleCategory.BIKE] and d.category != request.category:
+                continue
+            if not _category_satisfies(d.category, request.category):
                 continue
             if d.category == VehicleCategory.EV and d.ev_range_km < ride_distance:
                 continue
