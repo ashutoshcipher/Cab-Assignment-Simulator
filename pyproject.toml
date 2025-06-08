@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cab_allocator"
+version = "0.1.0"
+description = "Cab Assignment Simulator"
+authors = [{name = "Example", email = "example@example.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cab_allocator*"]
+
+[project.optional-dependencies]
+dev = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pytest",
+    "pytest-cov",
+]
