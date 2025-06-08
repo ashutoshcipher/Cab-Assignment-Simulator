@@ -2,6 +2,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from ..infra.settings import Settings
+
 from ..models import Driver, RideRequest, RideEstimate, VehicleCategory
 from ..geo import DistanceProvider
 from ..pricing import FareCalculator
@@ -9,7 +11,13 @@ from ..pricing import FareCalculator
 class AllocationStrategy(ABC):
     """Base class for ride allocation strategies."""
 
-    def __init__(self, dist_provider: DistanceProvider, fare_calc: FareCalculator, max_eta_km: float = 5.0):
+    def __init__(
+        self,
+        dist_provider: DistanceProvider,
+        fare_calc: FareCalculator,
+        settings: Settings | None = None,
+        max_eta_km: float = 5.0,
+    ):
         """Create a new strategy instance.
 
         Parameters
@@ -23,7 +31,13 @@ class AllocationStrategy(ABC):
         """
         self.dist = dist_provider
         self.fare = fare_calc
+        self.settings = settings
         self.max_eta_km = max_eta_km
+
+    def _get_max_eta_km(self, timestamp: float) -> float:
+        if self.settings is not None:
+            return self.settings.max_eta_km_for(timestamp)
+        return self.max_eta_km
 
     @abstractmethod
     def allocate(self, request: RideRequest, drivers: List[Driver]) -> Optional[RideEstimate]:
@@ -38,14 +52,14 @@ class SingleStrategy(AllocationStrategy):
         ride_distance = self.dist.distance_km(request.pickup, request.dropoff)
         candidates = []
         for d in drivers:
-            if d.state.value != 'available':
+            if not d.is_active(request.timestamp):
                 continue
             if d.category in [VehicleCategory.AUTO, VehicleCategory.BIKE] and d.category != request.category:
                 continue
             if d.category == VehicleCategory.EV and d.ev_range_km < ride_distance:
                 continue
             eta = self.dist.distance_km(d.location, request.pickup)
-            if eta > self.max_eta_km:
+            if eta > self._get_max_eta_km(request.timestamp):
                 continue
             candidates.append((eta, d))
         if not candidates:
