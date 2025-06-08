@@ -1,19 +1,75 @@
 # Cab Assignment Simulator High Level Design
 
-This document describes a future scalable architecture for the cab assignment service. It complements the low level design and highlights additional components that are currently out of scope for the in-memory prototype.
+This document outlines a scalable architecture for assigning cabs to ride requests.
+It complements the low level design and explains services that extend the simple
+in-memory prototype.
 
-## Datastore Choices
-- **Redis** with the Geo extension to store active driver locations.
-- **Postgres** for persisting driver profiles, ride history and other durable data.
+## Overview and Goals
+The goal is to dispatch nearby available drivers quickly while enabling future
+expansion. A full system should ingest driver locations and ride events through
+message brokers, store data in durable datastores and expose an HTTP API for
+clients. Non-goals include real-time surge pricing algorithms or mobile app
+features.
 
-## Message Brokers
-- **Kafka** topic used for continuous driver location updates.
-- **RabbitMQ** queue to publish ride lifecycle events to background workers.
+## System Components
+### API Server
+- **FastAPI** exposes endpoints for drivers and ride requests.
+- **Pydantic** validates payloads and handles configuration.
 
-## External Dependencies
-- **FastAPI** powers the HTTP API.
-- **Pydantic** validates requests and manages configuration.
-- Asynchronous worker components (for example Celery or a custom consumer) process messages from Kafka and RabbitMQ.
+### Message Brokers
+- **Kafka** delivers continuous driver location updates.
+- **RabbitMQ** queues ride lifecycle events for asynchronous processing.
 
-## Difference from the In-Memory Prototype
-The simulator keeps drivers in an in-memory list and handles ride requests synchronously. The [README](../README.md) notes that driver locations should come from a Kafka topic and be stored in Redis-Geo, distance is computed via the Haversine formula, and `max_eta_km` ought to vary per region and time of day. Only the distance provider exists today; the rest of those assumptions are not implemented. A scalable deployment would use Redis and Postgres backed by Kafka and RabbitMQ to process updates asynchronously.
+### Worker Services
+- Consumers read from Kafka and RabbitMQ and update datastores.
+- Workers can be implemented with Celery or custom asyncio consumers.
+
+### Datastores
+- **Redis** with Geo indexes stores active driver coordinates.
+- **Postgres** persists driver profiles and ride history.
+
+## Data Flow
+1. Drivers publish their current location to Kafka.
+2. Worker services consume these updates and write them to Redis.
+3. When a ride is created via the API, an event is published to RabbitMQ.
+4. Background workers record ride details in Postgres and update driver state.
+
+## Scalability & Deployment
+Multiple API instances can run behind a load balancer. Kafka, RabbitMQ,
+Redis and Postgres should be deployed in replicated clusters to survive node
+failures. Workers run in parallel and scale horizontally to match throughput.
+
+## Diagrams
+```mermaid
+graph LR
+    A[FastAPI] -->|location| B[Kafka]
+    A -->|ride events| C[RabbitMQ]
+    B --> D[Workers]
+    C --> D
+    D --> E[Redis]
+    D --> F[Postgres]
+```
+```mermaid
+sequenceDiagram
+    participant Driver
+    participant Kafka
+    participant Worker
+    participant Redis
+    participant API
+    participant RabbitMQ
+    participant Postgres
+    Driver->>Kafka: location update
+    Kafka->>Worker: consume
+    Worker->>Redis: update geo
+    API->>RabbitMQ: ride event
+    RabbitMQ->>Worker: consume
+    Worker->>Postgres: persist ride
+```
+
+## Prototype Comparison
+The simulator currently maintains drivers in memory and processes rides
+synchronously. The README assumes driver locations come through Kafka,
+are stored in Redis-Geo and that `max_eta_km` varies by region and time of day.
+Those features plus asynchronous ride event handling remain unimplemented.
+A scalable deployment would use Redis and Postgres backed by Kafka and RabbitMQ
+as shown above.
