@@ -3,9 +3,9 @@
 This project simulates cab allocation for a ride hailing service in India.
 
 ## Assumptions
-- Driver locations come from a Kafka topic and are stored in Redis-Geo.
 - Distance computation uses the Haversine formula by default.
-- `max_eta_km` is configurable per region and time of day.
+- Kafka-based location feeds, Redis-Geo storage and dynamic `max_eta_km` are
+  planned future features. See [docs/HLD.md](docs/HLD.md) for more detail.
 
 ## Local Setup
 ```bash
