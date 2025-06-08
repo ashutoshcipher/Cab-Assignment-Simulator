@@ -4,6 +4,7 @@ from .enums import VehicleCategory, DriverState
 
 @dataclass
 class Driver:
+    """Represents a driver available for ride allocation."""
     id: str
     location: Tuple[float, float]
     category: VehicleCategory

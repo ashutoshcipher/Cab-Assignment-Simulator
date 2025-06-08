@@ -4,6 +4,7 @@ from .enums import VehicleCategory
 
 @dataclass
 class RideRequest:
+    """Input data describing a requested ride."""
     id: str
     pickup: Tuple[float, float]
     dropoff: Tuple[float, float]
@@ -13,6 +14,7 @@ class RideRequest:
 
 @dataclass
 class RideEstimate:
+    """Output produced after a ride has been allocated."""
     request: RideRequest
     distance_km: float
     eta_min: float

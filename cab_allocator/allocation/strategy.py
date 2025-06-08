@@ -7,17 +7,34 @@ from ..geo import DistanceProvider
 from ..pricing import FareCalculator
 
 class AllocationStrategy(ABC):
+    """Base class for ride allocation strategies."""
+
     def __init__(self, dist_provider: DistanceProvider, fare_calc: FareCalculator, max_eta_km: float = 5.0):
+        """Create a new strategy instance.
+
+        Parameters
+        ----------
+        dist_provider:
+            Component used to compute geographic distances.
+        fare_calc:
+            Fare calculator used for pricing rides.
+        max_eta_km:
+            Maximum driver ETA in kilometres before a driver is ignored.
+        """
         self.dist = dist_provider
         self.fare = fare_calc
         self.max_eta_km = max_eta_km
 
     @abstractmethod
     def allocate(self, request: RideRequest, drivers: List[Driver]) -> Optional[RideEstimate]:
+        """Return an estimate for the request or ``None`` when no driver fits."""
         ...
 
 class SingleStrategy(AllocationStrategy):
+    """Simple allocation strategy that chooses the closest suitable driver."""
+
     def allocate(self, request: RideRequest, drivers: List[Driver]) -> Optional[RideEstimate]:
+        """Allocate a single driver that meets all requirements."""
         ride_distance = self.dist.distance_km(request.pickup, request.dropoff)
         candidates = []
         for d in drivers:

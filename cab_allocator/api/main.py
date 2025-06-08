@@ -15,10 +15,12 @@ DRIVERS: list[Driver] = []
 
 @app.post('/driver')
 async def add_driver(driver: Driver):
+    """Register a driver in the in-memory list used for demo purposes."""
     DRIVERS.append(driver)
     return {'status': 'ok'}
 
 @app.post('/request')
 async def request_ride(req: RideRequest) -> RideEstimate | None:
+    """Allocate a driver for the incoming ride request."""
     estimate = strategy.allocate(req, DRIVERS)
     return estimate
